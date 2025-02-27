@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absurdle Solver</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;700&display=swap');
+        
+        * {
+            box-sizing: border-box
+        }
+
+        html {
+            height: 100%;
+            font-family: "IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif
+        }
+
+        body {
+            height: 100%;
+            margin: 0;
+            font-size: 16px
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--ui-background);
+            color: var(--text-01);
+            max-width: 40em;
+            margin: 0 auto;
+            padding: 2em 1em;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1em;
+        }
+
+        h1 span {
+            font-size: 0.8em;
+            color: var(--text-02);
+            font-weight: normal;
+            display: block;
+            margin-top: 0.3em;
+        }
+
+        .input-group {
+            margin: 2em 0;
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            justify-content: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.8em;
+            font-size: 1.2em;
+            text-align: center;
+            font-family: inherit;
+            border: 2px solid var(--ui-03);
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--interactive-01);
+        }
+
+        .solution {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .result-text {
+            font-size: 0.9em;
+            color: var(--text-01);
+            margin: 0.5em 0;
+        }
+
+        .absurdle__guess-table {
+            margin: 1em auto;
+        }
+
+        .absurdle__guess-box {
+            width: 3em;
+            padding: .5em 0;
+            font-size: 1.25em;
+            text-align: center;
+            position: relative;
+            color: var(--text-01)
+        }
+
+        .absurdle__guess-box--wrong {
+            background-color: var(--interactive-02);
+            color: var(--text-04)
+        }
+
+        .absurdle__guess-box--inexact {
+            background-color: var(--support-03);
+            color: var(--inexact-text)
+        }
+
+        .absurdle__guess-box--exact {
+            background-color: var(--support-02);
+            color: var(--inverse-01)
+        }
+
+        .error {
+            color: #d32f2f;
+            font-weight: 500;
+        }
+
+        :root {
+            --disabled-01: #f4f4f4;
+            --disabled-02: #c6c6c6;
+            --interactive-01: #0f62fe;
+            --interactive-02: #393939;
+            --inverse-01: #ffffff;
+            --link-01: #0f62fe;
+            --hover-primary: #0353e9;
+            --hover-secondary: #4c4c4c;
+            --hover-selected-ui: #cacaca;
+            --support-02: #198038;
+            --support-03: #f1c21b;
+            --text-01: #161616;
+            --text-02: #525252;
+            --text-04: #ffffff;
+            --ui-03: #e0e0e0;
+            --ui-04: #8d8d8d;
+            --ui-background: #ffffff;
+            --visited-link: #8a3ffc;
+            --inexact-text: #161616;
+            --hover-support-02: #42be65;
+            --hover-support-03: #f6d026
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --disabled-01: #262626;
+                --disabled-02: #525252;
+                --interactive-02: #6f6f6f;
+                --inverse-01: #161616;
+                --link-01: #78a9ff;
+                --hover-secondary: #606060;
+                --hover-selected-ui: #4c4c4c;
+                --support-02: #42be65;
+                --text-01: #f4f4f4;
+                --text-02: #c6c6c6;
+                --ui-03: #393939;
+                --ui-04: #6f6f6f;
+                --ui-background: #161616;
+                --visited-link: #be95ff;
+                --hover-support-02: #198038;
+                --hover-support-03: #b1820f
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            Absurdle Solver
+            <span>(Challenge mode)</span>
+        </h1>
+        <div class="input-group">
+            <input type="text" 
+                   id="targetWord" 
+                   placeholder="ENTER 5-LETTER WORD" 
+                   maxlength="5"
+                   oninput="this.value = this.value.toUpperCase(); if(this.value.length === 5) solvePuzzle().catch(error => {
+                       document.getElementById('solution').innerHTML = 
+                           `<p class='error'>Error: ${error.message}</p>`;
+                   })">
+        </div>
+        <div id="solution" class="solution"></div>
+    </div>
+    <script src="absurdle_solver.js"></script>
+</body>
+</html> 
