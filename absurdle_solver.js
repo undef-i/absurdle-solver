@@ -6,6 +6,16 @@ class AbsurdleSolver {
         this.allWords = new Set(this.possibleWords);
         this.guessedWords = new Set();
         this._patternCache = new Map();
+        this._letterFreq = new Map();
+        this._calculateLetterFrequencies();
+    }
+
+    _calculateLetterFrequencies() {
+        for (const word of this.possibleWords) {
+            for (const letter of word) {
+                this._letterFreq.set(letter, (this._letterFreq.get(letter) || 0) + 1);
+            }
+        }
     }
 
     _getPattern(guess, target) {
@@ -15,23 +25,22 @@ class AbsurdleSolver {
         }
 
         const pattern = Array(this.wordLength).fill('0');
-        const used = Array(this.wordLength).fill(false);
-
+        const targetLetters = new Map();
+        
         for (let i = 0; i < this.wordLength; i++) {
             if (guess[i] === target[i]) {
                 pattern[i] = '2';
-                used[i] = true;
+            } else {
+                targetLetters.set(target[i], (targetLetters.get(target[i]) || 0) + 1);
             }
         }
 
         for (let i = 0; i < this.wordLength; i++) {
             if (pattern[i] === '0') {
-                for (let j = 0; j < this.wordLength; j++) {
-                    if (!used[j] && guess[i] === target[j] && guess[j] !== target[j]) {
-                        pattern[i] = '1';
-                        used[j] = true;
-                        break;
-                    }
+                const count = targetLetters.get(guess[i]);
+                if (count > 0) {
+                    pattern[i] = '1';
+                    targetLetters.set(guess[i], count - 1);
                 }
             }
         }
@@ -115,37 +124,42 @@ class AbsurdleSolver {
 
     _makeHeuristicGuess() {
         const targetLetters = new Set(this.targetWord);
+        
         const candidates = [...this.allWords]
             .filter(word => !this.guessedWords.has(word))
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 100);
+            .map(word => {
+                let score = 0;
+                const usedLetters = new Set();
+                
+                for (const letter of word) {
+                    if (!usedLetters.has(letter)) {
+                        score += this._letterFreq.get(letter) || 0;
+                        usedLetters.add(letter);
+                    }
+                }
+                
+                const targetLettersUsed = [...word].filter(c => targetLetters.has(c)).length;
+                return { word, score, targetLettersUsed };
+            })
+            .sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return b.targetLettersUsed - a.targetLettersUsed;
+            })
+            .slice(0, 50);
 
-        let bestGuess = null;
-        let bestScore = Infinity;
-        let bestTargetLetters = Infinity;
-
-        for (const guess of candidates) {
-            const patternGroups = this._evaluateGuess(guess);
+        for (const { word } of candidates) {
+            const patternGroups = this._evaluateGuess(word);
             const maxSize = Math.max(...[...patternGroups.values()].map(words => words.size));
             
             const maxGroup = [...patternGroups.entries()]
                 .find(([_, words]) => words.size === maxSize)[1];
 
             if (maxGroup.has(this.targetWord)) {
-                const targetLettersUsed = [...guess].filter(c => targetLetters.has(c)).length;
-                if (maxSize < bestScore || 
-                    (maxSize === bestScore && targetLettersUsed < bestTargetLetters)) {
-                    bestScore = maxSize;
-                    bestTargetLetters = targetLettersUsed;
-                    bestGuess = guess;
-                }
+                this.guessedWords.add(word);
+                return word;
             }
         }
 
-        if (bestGuess) {
-            this.guessedWords.add(bestGuess);
-            return bestGuess;
-        }
         return null;
     }
 
@@ -166,6 +180,8 @@ class AbsurdleSolver {
         }
 
         this.possibleWords = newPossible;
+        this._letterFreq.clear();
+        this._calculateLetterFrequencies();
     }
 }
 
@@ -241,7 +257,10 @@ async function solvePuzzle() {
         await loadDictionary();
     }
 
+    const startTime = performance.now();
     const solution = findSolutionPath(targetWord);
+    const endTime = performance.now();
+    const timeElapsed = Math.round(endTime - startTime);
     
     if (!solution) {
         solutionDiv.innerHTML = '<p class="error">No valid solution found.</p>';
@@ -263,6 +282,7 @@ async function solvePuzzle() {
     html += `</tbody></table>`;
     html += `<p class="result-text">Target word: ${targetWord.toUpperCase()}</p>`;
     html += `<p>Solved in ${solution.length} steps!</p>`;
+    html += `<p><small>(${timeElapsed}ms)</small></p>`;
     
     solutionDiv.innerHTML = html;
 }
